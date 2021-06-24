@@ -1,3 +1,11 @@
+"""
+Library of classes defining how population of agent cells evolve during the simulation.
+Each class must contain the following methods:
+'update' defines how the population evolves at each time step.
+'record' defines which paramters are recorded.
+"""
+
+"""External libaries"""
 import numpy as np
 
 rng = np.random.default_rng()
@@ -21,8 +29,8 @@ class SimpleEvolution:
         self.Records = LineageRecords(CellNumber, SampleNumber, SampleInterval)
         self.BirthIndices = None
         self.DeathIndices = None
-        self.SdCheY = 0.1
-        self.SdReceptorMethylationRate = 0.05
+        self.SdCheY = 0.5
+        self.SdReceptorMethylationRate = 0.25
         # self.RespawnPosition = 0.25
 
     def update(self, CellBody, CellMind, World):
@@ -54,10 +62,10 @@ class SimpleEvolution:
         # CellBody.Position[self.DeathIndices, 0] = World.Dimensions[0] * self.RespawnPosition
         CellBody.Position[self.DeathIndices, :] = CellBody.Position[self.BirthIndices, :]
         CellMind.CheY[self.DeathIndices] = CellMind.CheY[self.BirthIndices] + \
-            rng.standard_normal(self.BirthIndices.__len__()) * self.SdCheY
+            (rng.random(self.BirthIndices.__len__()) - 0.5) * self.SdCheY
         CellMind.CheY[CellMind.CheY < 1e-12] = 1e-12
         CellMind.ReceptorMethylationRate[self.DeathIndices,:] = CellMind.ReceptorMethylationRate[self.BirthIndices,:] * \
-            np.exp(rng.standard_normal((self.BirthIndices.__len__(),CellMind.ReceptorNumber)) * self.SdReceptorMethylationRate)
+            np.exp((rng.random((self.BirthIndices.__len__(),CellMind.ReceptorNumber)) - 0.5) * self.SdReceptorMethylationRate)
         CellMind.ReceptorMethylationRate[CellMind.ReceptorMethylationRate < 0] = 0
         # CellMind.ResetReceptorMethylation[self.DeathIndices] = True
         # CellMind.ResetReceptorMethylation[self.BirthIndices] = True
@@ -68,3 +76,15 @@ class SimpleEvolution:
         CellBody.LigandConsumedIntegrated[self.DeathIndices,:] = 0
         CellBody.CellSize[self.BirthIndices] = 1
         CellBody.CellSize[self.DeathIndices] = 1
+
+class NoEvolution:
+
+    def __init__(self, CellNumber, SampleNumber, SampleInterval):
+        self.Records = LineageRecords(CellNumber, SampleNumber, SampleInterval)
+
+    def update(self, CellBody, CellMind, World):
+        pass
+
+    def record(self, Clock):
+        self.Records.Time[self.Records.Iterator] = Clock
+        self.Records.Iterator += 1

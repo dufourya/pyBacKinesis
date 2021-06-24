@@ -1,3 +1,12 @@
+"""
+Library of classes defining the signaling pathway of cell agent for simulations.
+The main CellMind class must contain the following methods:
+'update' defines how the dynamics of the signaling pathway changes at each time step.
+'record' defines which paramters are recorded.
+Subclasses of CellMind must be define to specify the parameters of different types of cell agents.
+"""
+
+"""External libaries"""
 import numpy as np
 
 rng = np.random.default_rng()
@@ -101,8 +110,8 @@ class EcoliMind(CellMind):
     self.ReceptorProportions = self.ReceptorProportions / np.sum(self.ReceptorProportions)
     self.ReceptorEnergyInactive = np.ones(self.ReceptorNumber) * 6 #kbT
     self.ReceptorEnergyActive   = np.ones(self.ReceptorNumber) * -1 #kbT
-    self.ReceptorInactiveBindingConst = np.array([[1e1, 1e2], [1e2, 1e1]]) #uM
-    self.ReceptorActiveBindingConst   = np.array([[1e4, 1e5], [1e5, 1e4]]) #uM
+    self.ReceptorInactiveBindingConst = np.array([[1e1, 1e3], [1e3, 1e1]]) #uM
+    self.ReceptorActiveBindingConst   = np.array([[1e4, 1e6], [1e6, 1e4]]) #uM
 
     self.ClusterRelativeActivityEquilibrium = np.array([0.37, 0.37])
     self.ReceptorMethylationEquilibrium = (np.log(1 / self.ClusterRelativeActivityEquilibrium - 1) - self.ReceptorEnergyInactive) / self.ReceptorEnergyActive
@@ -118,8 +127,8 @@ class EcoliMind(CellMind):
     # calculated demethylation rate to set receptor resting activity
     self.ReceptorDemethylationRate = self.ReceptorMethylationRate * (1 - self.ClusterRelativeActivityEquilibrium[None,:]) / \
       (self.ClusterRelativeActivityEquilibrium[None,:] * (self.ClusterRelativeActivityEquilibrium[None,:] * (self.DemethylationActivationFactor - 1) + 1))
-    self.CheY = rng.standard_normal(CellNumber) + 8 #uM
-    # self.CheY = 6
+    # self.CheY = rng.random(CellNumber) * 10 #uM
+    self.CheY = rng.random(CellNumber) + 5.5 #uM
 
     # intialize cells
     super(EcoliMind, self).__init__(CellNumber, SampleNumber, SampleInterval)
