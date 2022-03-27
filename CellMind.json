@@ -1,0 +1,7 @@
+{
+    "CellMind":
+        {
+            "CheY": 5,
+            "MethylationNoiseSigma": 0.1
+        }
+}

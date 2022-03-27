@@ -24,7 +24,7 @@ class LineageRecords:
 
 class SimpleEvolution:
 
-    def __init__(self, CellNumber, SampleNumber, SampleInterval):
+    def __init__(self, CellNumber, SampleNumber, SampleInterval,Override=None):
         self.CellNumber = CellNumber
         self.Records = LineageRecords(CellNumber, SampleNumber, SampleInterval)
         self.BirthIndices = None
@@ -32,6 +32,9 @@ class SimpleEvolution:
         self.SdCheY = 0.5
         self.SdReceptorMethylationRate = 0.25
         # self.RespawnPosition = 0.25
+        if not(Override is None):
+            print('Overriding parameters in Lineages!')
+            self.override_parameters(Override)
 
     def update(self, CellBody, CellMind, World):
         self.update_birth_death(CellBody, World)
@@ -77,9 +80,15 @@ class SimpleEvolution:
         CellBody.CellSize[self.BirthIndices] = 1
         CellBody.CellSize[self.DeathIndices] = 1
 
+    def override_parameters(self, Override):
+        for item in vars(Override):
+            assert hasattr(self,item)
+            setattr(self,item,getattr(Override,item))
+
+
 class NoEvolution:
 
-    def __init__(self, CellNumber, SampleNumber, SampleInterval):
+    def __init__(self, CellNumber, SampleNumber, SampleInterval, Override=None):
         self.Records = LineageRecords(CellNumber, SampleNumber, SampleInterval)
 
     def update(self, CellBody, CellMind, World):

@@ -124,6 +124,12 @@ class CellBody:
         self.update_quaternion()
         self.update_orientation()
 
+    def override_parameters(self, Override):
+        for item in vars(Override):
+            assert hasattr(self,item)
+            setattr(self,item,getattr(Override,item))
+
+
 class BodyRecords:
 
     def __init__(self,CellNumber,LigandNumber,SampleNumber,SampleInterval):
@@ -160,7 +166,7 @@ class BodyRecords:
 
 class EcoliBody(CellBody):
 
-    def __init__(self,CellNumber,SampleNumber,SampleInterval):
+    def __init__(self,CellNumber,SampleNumber,SampleInterval,Override=None):
 
         ## cell parameters
         self.Name = 'Escherichia coli'
@@ -193,6 +199,10 @@ class EcoliBody(CellBody):
         
         self.ConversionLigandSize = np.array([2e-3,2e-3])
         # self.MotorSynthesisRate = self.MotorAverageNumber / self.LigandConsumptionRate
+
+        if not(Override is None):
+            print('Overriding parameters in CellBody!')
+            self.override_parameters(Override)
 
         super(EcoliBody,self).__init__(CellNumber,SampleNumber,SampleInterval)
 

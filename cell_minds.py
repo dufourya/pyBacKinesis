@@ -66,10 +66,16 @@ class CellMind:
         self.ClusterRelativeActivity * self.ReceptorDemethylationRate * \
           (self.ClusterTotalRelativeActivity[:,None] * (self.DemethylationActivationFactor - 1) + 1))
     # add Methylation noise
-    if self.MethylationNoiseSigma > 0:
-      self.Methylation += SimulationTimeStep * self.MethylationNoiseSigma * (rng.random(self.CellNumber) - 0.5)
+    if not(self.MethylationNoiseSigma is None):
+      self.Methylation += SimulationTimeStep * self.MethylationNoiseSigma * (rng.random((self.CellNumber,self.ReceptorNumber)) - 0.5)
     self.Methylation[self.Methylation < self.ReceptorMethylationMin] = self.ReceptorMethylationMin
     self.Methylation[self.Methylation > self.ReceptorMethylationMax] = self.ReceptorMethylationMax
+
+  def override_parameters(self, Override):
+    for item in vars(Override):
+      assert hasattr(self,item)
+      setattr(self,item,getattr(Override,item))
+        
 
 
 class MindRecords:
@@ -100,7 +106,7 @@ class MindRecords:
 
 
 class EcoliMind(CellMind):
-  def __init__(self, CellNumber, SampleNumber, SampleInterval):
+  def __init__(self, CellNumber, SampleNumber, SampleInterval, Override=None):
 
     self.Name = 'Escherichia coli'
 
@@ -112,9 +118,7 @@ class EcoliMind(CellMind):
     self.ReceptorEnergyActive   = np.ones(self.ReceptorNumber) * -1 #kbT
     self.ReceptorInactiveBindingConst = np.array([[1e1, 1e3], [1e3, 1e1]]) #uM
     self.ReceptorActiveBindingConst   = np.array([[1e4, 1e6], [1e6, 1e4]]) #uM
-
     self.ClusterRelativeActivityEquilibrium = np.array([0.37, 0.37])
-    self.ReceptorMethylationEquilibrium = (np.log(1 / self.ClusterRelativeActivityEquilibrium - 1) - self.ReceptorEnergyInactive) / self.ReceptorEnergyActive
 
     self.ReceptorCooperativity = 6
     self.ReceptorMethylationMin = 0   #minimum value allowed in Methylation
@@ -123,12 +127,18 @@ class EcoliMind(CellMind):
     # self.ReceptorMethylationRate = 0.1
 
     self.DemethylationActivationFactor = 70
-    self.MethylationNoiseSigma = 0
+    self.MethylationNoiseSigma = None
+    
+    self.CheY = rng.random(CellNumber) + 5.5 #uM
+
+    if not(Override is None):
+      print('Overriding parameters in CellMind!')
+      self.override_parameters(Override)
+
     # calculated demethylation rate to set receptor resting activity
+    self.ReceptorMethylationEquilibrium = (np.log(1 / self.ClusterRelativeActivityEquilibrium - 1) - self.ReceptorEnergyInactive) / self.ReceptorEnergyActive
     self.ReceptorDemethylationRate = self.ReceptorMethylationRate * (1 - self.ClusterRelativeActivityEquilibrium[None,:]) / \
       (self.ClusterRelativeActivityEquilibrium[None,:] * (self.ClusterRelativeActivityEquilibrium[None,:] * (self.DemethylationActivationFactor - 1) + 1))
-    # self.CheY = rng.random(CellNumber) * 10 #uM
-    self.CheY = rng.random(CellNumber) + 5.5 #uM
 
     # intialize cells
     super(EcoliMind, self).__init__(CellNumber, SampleNumber, SampleInterval)

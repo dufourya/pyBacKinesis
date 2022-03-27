@@ -70,12 +70,14 @@ class BoxHillEquation:
     def __init__(self,SampleNumber,SampleInterval):
         self.LigandNumber = 2
         self.LigandMaxConcentration = np.array([1e4,1e4])
-        self.LigandHalfGradient = np.array([3e3,7e3])
-        self.LigandGradientSlope = np.array([5,5])
+        self.LigandHalfGradient = np.array([5e3,5e3])
+        self.LigandGradientSlope = np.array([3,3])
         self.Dimensions = np.array([1e4,1e3,1e3],dtype = np.int16)
         self.WorldScaling = 1
         self.DimensionsScaled = np.uint16(self.Dimensions / self.WorldScaling)
         self.Records = WorldRecords(self,SampleNumber,SampleInterval)
+        self.GradientDirection = np.array([1,-1])
+        self.GradientOffset = np.array([0,self.Dimensions[0]])
         
     def update(self,CellBody,SimulationTimeStep):
         self.check_world_boundaries(CellBody)
@@ -87,7 +89,7 @@ class BoxHillEquation:
         self.Records.Iterator += 1
 
     def get_ligand_concentration(self,CellBody):
-        return self.LigandMaxConcentration[None,:] / (1 + (self.LigandHalfGradient[None,:] / (0.01 + CellBody.Position[:,0,None])) ** self.LigandGradientSlope[None,:]) # added 0.01 to cell positions to avoid divide by 0
+        return self.LigandMaxConcentration[None,:] / (1 + (self.LigandHalfGradient[None,:] / ((0.01 + CellBody.Position[:,0,None]) * self.GradientDirection[None,:] + self.GradientOffset[None,:])) ** self.LigandGradientSlope[None,:]) # added 0.01 to cell positions to avoid divide by 0
 
     def check_world_boundaries(self,CellBody):
         CellBody.Collision = np.logical_or(np.sum(CellBody.Position > self.Dimensions[None,:],axis=1),np.sum(CellBody.Position < np.array([0,0,0]),axis=1))

@@ -13,6 +13,7 @@ The output of the simulation, which contains records of many parameters, is save
 """External libraries"""
 import time
 import pickle
+import sys
 
 """Internal libraries"""
 import cell_minds
@@ -20,26 +21,30 @@ import cell_bodies
 import worlds
 import lineages
 import simulate
-
+import parse_override_parameters
 
 def main():
 
     """Parameters for simulation"""    
-    CELL_NUMBER = 10
-    TOTAL_SIMULATION_TIME = 500
-    SIMULATION_TIME_STEP = 0.01
-    COLLECTION_TIME_STEP = 1
+    CELL_NUMBER             = 10
+    TOTAL_SIMULATION_TIME   = 500
+    SIMULATION_TIME_STEP    = 0.01
+    COLLECTION_TIME_STEP    = 1
+    PICKLE_FILE_NAME        = "OutputData.p"
 
     """Parameters for data recording"""    
-    SampleInterval = int(COLLECTION_TIME_STEP/SIMULATION_TIME_STEP)
-    SampleNumber = int(TOTAL_SIMULATION_TIME/COLLECTION_TIME_STEP)
-    StepNumber = int(TOTAL_SIMULATION_TIME/SIMULATION_TIME_STEP)
+    SampleInterval  = int(COLLECTION_TIME_STEP/SIMULATION_TIME_STEP)
+    SampleNumber    = int(TOTAL_SIMULATION_TIME/COLLECTION_TIME_STEP)
+    StepNumber      = int(TOTAL_SIMULATION_TIME/SIMULATION_TIME_STEP)
+
+    """Import additional parameters"""
+    override_parameters = parse_override_parameters.parse_json(sys.argv[1:])
 
     """Initialize classes to build the simulation"""
-    CellMind = cell_minds.EcoliMind(CELL_NUMBER,SampleNumber,SampleInterval)        # chemotaxis signaling pathway based on Escherichia coli
-    CellBody = cell_bodies.EcoliBody(CELL_NUMBER,SampleNumber,SampleInterval)       # agent cell behavior based on Escherichia coli
+    CellMind = cell_minds.EcoliMind(CELL_NUMBER,SampleNumber,SampleInterval,override_parameters.CellMind)        # chemotaxis signaling pathway based on Escherichia coli
+    CellBody = cell_bodies.EcoliBody(CELL_NUMBER,SampleNumber,SampleInterval,override_parameters.CellBody)       # agent cell behavior based on Escherichia coli
     # Lineage = lineages.SimpleEvolution(CELL_NUMBER,SampleNumber,SampleInterval)   # simple rules for evolution by natural selection based on cell performance
-    Lineage = lineages.NoEvolution(CELL_NUMBER,SampleNumber,SampleInterval)         # no evolution of the original agent cell population
+    Lineage = lineages.NoEvolution(CELL_NUMBER,SampleNumber,SampleInterval,override_parameters.Lineage)         # no evolution of the original agent cell population
     # World    = worlds.OpenCapillary(SampleNumber,SampleInterval)                  # defines a capillary environment with 1 open side and reaction-diffusion dynamics
     # World    = worlds.StepLigand(SampleNumber,SampleInterval)                     # defines simple environment with a sudden change of chemical signals after some time
     # World    = worlds.BoxExponential(SampleNumber,SampleInterval)                 # defines a closed box with exponentail chemical gradients
@@ -54,9 +59,9 @@ def main():
     Results_0 = simulate.start_simulation(CellMind, CellBody, World, Lineage, StepNumber, SIMULATION_TIME_STEP)
     t1 = str(int(time.time() - t0))
     print(t1 + " seconds")
-    pickle.dump(Results_0,open( "Results_0.p", "wb" ))
+    pickle.dump(Results_0,open(PICKLE_FILE_NAME , "wb" ))
 
-    """Continue the simulation from the previous state and save records"""
+    # """Continue the simulation from the previous state and save records"""
     # t0 = time.time()
     # Results_1 = simulate.continue_simulation(Results_0, StepNumber)
     # t1 = str(int(time.time() - t0))
